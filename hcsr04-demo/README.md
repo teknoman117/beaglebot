@@ -7,8 +7,31 @@ This examples assumes you have downloaded and compiled the assembler and library
 
 Just open a terminal and navigate to the hcsr04-demo directory and run make.  I don't have cross compilation set up here, it was meant to run from the beaglebone.  Then run the generated executable "hcsr04_demo" as root, or you will encounter a segmentation fault.  If everything was setup right, the program will load the generated pru binary (hcsr04_demo.bin, should be in the directory you run the application from) into the PRU and then wait for events from the PRU and print out the distance in centimeters.
 
-Note about kernel 3.6+
+Note about kernel 3.6 and 3.7
 ----
-I'm running kernel 3.8.6 at the moment, see https://github.com/Teknoman117/beaglebot-kernel for the kernel I use.  I forked Robert Nelson's repo because once you have a kernel which works in the embedded world, you stick with it for a while :).  Since kernel 3.6, the omap_mux kernel driver was removed in favor of the new device tree system of hardware configuration.  It all very cool, but it requires editing files that are part of the board's firware.  Its not so bad really, but was really nice with omap_mux to be able to change the pin muxing of the board without having to edit files, recompile firmware, and reboot.  So if you have your kernel source lying around, I have included a kernel module (hcsr04-pinmux-set) that will setup the IO pins mentioned above to the right states.  Open a terminal in the hcsr04-pinmux-set directory and run "make KDIR=<kernel source directory> COMPILER_PREFIX=<prefix of your cross compiler>"  For example, on my dev machine I run "make KDIR=/home/nathaniel/Programming/beaglebot-kernel/KERNEL COMPILER_PREFIX=arm-cortex_a8-linux-gnueabi-".  Just copy the generated hcsr04_pinmux_set.ko to your beaglebone and run "insmod hcsr04_pinmux.ko" as root.  Just check your dmesg to see if it succeeded.
+Since kernel 3.6, the omap_mux kernel driver was removed in favor of the new device tree system of hardware configuration.  It all very cool, but it requires editing files that are part of the board's firware.  Its not so bad really, but was really nice with omap_mux to be able to change the pin muxing of the board without having to edit files, recompile firmware, and reboot.  So if you have your kernel source lying around, I have included a kernel module (hcsr04-pinmux-set) that will setup the IO pins mentioned above to the right states.  Open a terminal in the hcsr04-pinmux-set directory and run "make KDIR=<kernel source directory> COMPILER_PREFIX=<prefix of your cross compiler>"  For example, on my dev machine I run "make KDIR=/home/nathaniel/Programming/beaglebot-kernel/KERNEL COMPILER_PREFIX=arm-cortex_a8-linux-gnueabi-".  Just copy the generated hcsr04_pinmux_set.ko to your beaglebone and run "insmod hcsr04_pinmux.ko" as root.  Just check your dmesg to see if it succeeded.
 
+Note about kernel 3.8+
+----
+Since kernel 3.8, we have something called a device tree overlay.  These are loaded in runtime to augment to configuration of a board while the kernel is booted.  This makes using them a lot more friendly because you don't have to recompile your board's base overlay, and since its during runtime, you don't have to reboot either.  A device tree source has been provided (note: untested at the moment) which enabled the pruss subsystem and also sets up the pins for this demo.  To compile it, grab and install a copy of the device tree compiler (script only works on Debian derived systems)
+
+```bash
+wget -c https://raw.github.com/RobertCNelson/tools/master/pkgs/dtc.sh
+chmod +x dtc.sh
+./dtc.sh
+````
+
+And then execute the following command
+
+```bash
+dtc -O dtb -o hcsr04_demo-00A0.dtbo -b 0 -@ hcsr04_demo.dts
+```
+
+Copy the resulting hcsr04_demo-00A0.dtbo to /lib/firmware, and then run the following on your beaglebone
+
+```bash
+echo hcsr04_demo > /sys/devices/bone_capemgr.*/slots
+```
+
+This will load the overlay and you should see some output in dmesg.  Congradulations - you've just loaded a device overlay and the demo pin configuration is locked in!
 
