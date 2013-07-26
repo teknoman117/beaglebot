@@ -1,20 +1,19 @@
-From b39ed9b1e15010e97e556f02e2c6c574dae90ddc Mon Sep 17 00:00:00 2001
-From: Teknoman117 <linux.robotdude@gmail.com>
-Date: Thu, 25 Jul 2013 00:04:41 -0700
-Subject: [PATCH] Patchset to create a driver for the Texas Instruction eQEP
- hardware found on some of the AM33xx series SoCs.
+From dedc9774d50775a07de54d5693a0def64a72792e Mon Sep 17 00:00:00 2001
+From: Nathaniel Lewis <linux.robotdude@gmail.com>
+Date: Thu, 25 Jul 2013 22:20:36 -0700
+Subject: [PATCH] Driver: Provides a sysfs interface to the eQEP hardware on
+ the AM33XX series SoCs
 
-Signed-off-by: Teknoman117 <linux.robotdude@gmail.com>
 ---
- arch/arm/boot/dts/am33xx.dtsi |   27 ++
- drivers/misc/Kconfig          |   11 +
- drivers/misc/Makefile         |    1 +
- drivers/misc/tieqep.c         |  722 +++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 761 insertions(+)
+ arch/arm/boot/dts/am33xx.dtsi |  27 ++
+ drivers/misc/Kconfig          |  11 +
+ drivers/misc/Makefile         |   1 +
+ drivers/misc/tieqep.c         | 742 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 781 insertions(+)
  create mode 100644 drivers/misc/tieqep.c
 
 diff --git a/arch/arm/boot/dts/am33xx.dtsi b/arch/arm/boot/dts/am33xx.dtsi
-index eb0d2d4..9870a49 100644
+index aedffdb..ad78525 100644
 --- a/arch/arm/boot/dts/am33xx.dtsi
 +++ b/arch/arm/boot/dts/am33xx.dtsi
 @@ -534,6 +534,15 @@
@@ -23,12 +22,12 @@ index eb0d2d4..9870a49 100644
  			};
 +			
 +			eqep0: eqep@0x48300180 {
-+			    compatible = "ti,am33xx-eqep";
-+			    reg = <0x48300180 0x80>;
-+			    interrupt-parent = <&intc>;
-+			    interrupts = <79>;
-+			    ti,hwmods = "eqep0";
-+    	        status = "disabled";
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48300180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <79>;
++				ti,hwmods = "eqep0";
++				status = "disabled";
 +			};
  		};
  
@@ -39,12 +38,12 @@ index eb0d2d4..9870a49 100644
  			};
 +			
 +			eqep1: eqep@0x48302180 {
-+			    compatible = "ti,am33xx-eqep";
-+			    reg = <0x48302180 0x80>;
-+			    interrupt-parent = <&intc>;
-+			    interrupts = <88>;
-+			    ti,hwmods = "eqep1";
-+    	        status = "disabled";
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48302180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <88>;
++				ti,hwmods = "eqep1";
++				status = "disabled";
 +			};
  		};
  
@@ -54,13 +53,13 @@ index eb0d2d4..9870a49 100644
  				status = "disabled";
  			};
 +			
-+		    eqep2: eqep@0x48304180 {
-+			    compatible = "ti,am33xx-eqep";
-+			    reg = <0x48304180 0x80>;
-+			    interrupt-parent = <&intc>;
-+			    interrupts = <89>;
-+			    ti,hwmods = "eqep2";
-+                status = "disabled";
++			eqep2: eqep@0x48304180 {
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48304180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <89>;
++				ti,hwmods = "eqep2";
++				status = "disabled";
 +			};
  		};
  
@@ -99,10 +98,10 @@ index 72aef82..b10c476 100644
  obj-y				+= cape/
 diff --git a/drivers/misc/tieqep.c b/drivers/misc/tieqep.c
 new file mode 100644
-index 0000000..835ddef
+index 0000000..0429383
 --- /dev/null
 +++ b/drivers/misc/tieqep.c
-@@ -0,0 +1,722 @@
+@@ -0,0 +1,742 @@
 +/*
 + * TI eQEP driver for AM33xx devices
 + *
@@ -127,10 +126,7 @@ index 0000000..835ddef
 + *   - position = absolute - current position; relative - last latched value
 + *   - mode => 0 - absolute; 1 - relative
 + *   - period => sampling period for the hardware
-+ *   - enable => 0 - eQEP disabled, 1 - eQEP enabled 
-+ *
-+ * potentially write a method of finding the eqep units through devices trees to create 
-+ * a kernel space PID controller for encoder => pwm stuff
++ *   - enable => 0 - eQEP disabled, 1 - eQEP enabled
 + */
 +
 +#include <linux/module.h>
@@ -240,7 +236,7 @@ index 0000000..835ddef
 +#define UTOF                (0x0001 << 11)
 +
 +// Bits to control the clock in the PWMSS subsystem
-+#define PWMSS_EQEPCLK_EN	    BIT(4)
++#define PWMSS_EQEPCLK_EN        BIT(4)
 +#define PWMSS_EQEPCLK_STOP_REQ  BIT(5)
 +#define PWMSS_EQEPCLK_EN_ACK    BIT(4)
 +
@@ -308,80 +304,103 @@ index 0000000..835ddef
 +    
 +    // Clear interrupt flags (write back triggered flags to the clear register)
 +    writew(iflags, eqep->mmio_base + QCLR);
-+	
-+	// Return that the IRQ was handled successfully
-+	return IRQ_HANDLED;
++    
++    // Return that the IRQ was handled successfully
++    return IRQ_HANDLED;
 +}
 +
 +// Function to read whether the eQEP unit is enabled or disabled
 +static ssize_t eqep_get_enabled(struct device *dev, struct device_attribute *attr, char *buf)
 +{
 +    // Get the instance structure
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
-+	
-+	// Read the qep control register and mask all but the enabled bit
-+	u16 enabled = readw(eqep->mmio_base + QEPCTL) & PHEN;
-+	
-+	// Return the target in string format
-+	return sprintf(buf, "%u\n", (enabled) ? 1 : 0);
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
++    
++    // Read the qep control register and mask all but the enabled bit
++    u16 enabled = readw(eqep->mmio_base + QEPCTL) & PHEN;
++    
++    // Return the target in string format
++    return sprintf(buf, "%u\n", (enabled) ? 1 : 0);
 +}
 +
 +// Function to set if the eQEP is enabled
 +static ssize_t eqep_set_enabled(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 +{
 +    // Get the instance structure
-+	int rc;
-+	u16 val;
-+	u8  enabled;
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
++    int rc;
++    u16 val;
++    u8  enabled;
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
 +
 +     // Convert the input string to an 8 bit uint
-+	if ((rc = kstrtou8(buf, 0, &enabled)))
-+		return rc;
-+		
-+	// Get the existing state of QEPCTL
-+	val = readw(eqep->mmio_base + QEPCTL);
-+	
-+	// If we passed a number that is not 0, enable the eQEP
-+	if(enabled)
-+	{
-+	    // Enable the eQEP (Set PHEN in QEPCTL)
-+	    val = val | PHEN;
-+	} else
-+	{
-+	    // Disable the eQEP (Clear PHEN in QEPCTL)
-+	    val = val & ~PHEN;
-+	}
-+	
-+	// Write flags back to control register
-+	writew(val, eqep->mmio_base + QEPCTL);
-+	
-+	// Return buffer length consumed (all)
-+	return count;
++    if ((rc = kstrtou8(buf, 0, &enabled)))
++        return rc;
++        
++    // Get the existing state of QEPCTL
++    val = readw(eqep->mmio_base + QEPCTL);
++    
++    // If we passed a number that is not 0, enable the eQEP
++    if(enabled)
++    {
++        // Enable the eQEP (Set PHEN in QEPCTL)
++        val = val | PHEN;
++    } else
++    {
++        // Disable the eQEP (Clear PHEN in QEPCTL)
++        val = val & ~PHEN;
++    }
++    
++    // Write flags back to control register
++    writew(val, eqep->mmio_base + QEPCTL);
++    
++    // Return buffer length consumed (all)
++    return count;
 +}
 +
 +// Function to read the current position of the eQEP
 +static ssize_t eqep_get_position(struct device *dev, struct device_attribute *attr, char *buf)
 +{
 +    // Get the instance structure
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
-+	
-+	// A variable to return the position with
-+	s32 position = 0;
-+	
-+	// Check the mode
-+	if(eqep->mode == TIEQEP_MODE_ABSOLUTE)
-+	{
-+	    // If we are in absolute mode, we need the current value of the eQEP hardware
-+	    position = readl(eqep->mmio_base + QPOSCNT);
-+	} else if(eqep->mode == TIEQEP_MODE_RELATIVE)
-+	{
-+	    // If we are in relative mode, we need the last latched value of the eQEP hardware
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
++    
++    // A variable to return the position with
++    s32 position = 0;
++    
++    // Check the mode
++    if(eqep->mode == TIEQEP_MODE_ABSOLUTE)
++    {
++        // If we are in absolute mode, we need the current value of the eQEP hardware
++        position = readl(eqep->mmio_base + QPOSCNT);
++    } else if(eqep->mode == TIEQEP_MODE_RELATIVE)
++    {
++        // If we are in relative mode, we need the last latched value of the eQEP hardware
 +        position = readl(eqep->mmio_base + QPOSLAT);
-+	}
-+	
-+	// Return the target in string format
-+	return sprintf(buf, "%d\n", position);
++    }
++    
++    // Return the target in string format
++    return sprintf(buf, "%d\n", position);
++}
++
++// Function to set the position of the eQEP hardware
++static ssize_t eqep_set_position(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++    // Get the instance structure
++    int rc;
++    s32 position;
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
++
++     // Convert the input string to an 8 bit uint
++    if ((rc = kstrtos32(buf, 0, &position)))
++        return rc;
++        
++    // If we are in absolute mode, set the position of the encoder, discard relative mode because thats pointless
++    if(eqep->mode == TIEQEP_MODE_ABSOLUTE)
++    {
++        // If we are in absolute mode, we need the current value of the eQEP hardware
++        writel(position, eqep->mmio_base + QPOSCNT);
++    }
++    
++    // Return buffer length consumed (all)
++    return count;
 +}
 +
 +// Function to read the period of the unit time event timer
@@ -452,80 +471,80 @@ index 0000000..835ddef
 +static ssize_t eqep_get_mode(struct device *dev, struct device_attribute *attr, char *buf)
 +{
 +    // Get the instance structure
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
-+	
-+	// Return the mode
-+	return sprintf(buf, "%u\n", eqep->mode);
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
++    
++    // Return the mode
++    return sprintf(buf, "%u\n", eqep->mode);
 +}
 +
 +// Function to set the mode of the eQEP hardware
 +static ssize_t eqep_set_mode(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 +{
 +    // Get the instance structure
-+	int rc;
-+	u16 val;
-+	u8  tmp_mode;
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
++    int rc;
++    u16 val;
++    u8  tmp_mode;
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
 +
 +     // Convert the input string to an 8 bit uint
-+	if ((rc = kstrtou8(buf, 0, &tmp_mode)))
-+		return rc;
-+		
-+	// Get the existing state of QEPCTL
-+	val = readw(eqep->mmio_base + QEPCTL);
-+	
-+	// Check the mode that was passed
-+	if(tmp_mode == TIEQEP_MODE_ABSOLUTE)
-+	{
-+	    // In absolute mode, we don't want to reset the intenal hardware based on time,
-+	    // so disable the unit timer position reset (Set PCRM[1:0] = 0)
-+	    val = val & ~PCRM1 & ~PCRM0;
-+	    
-+	    // Store the mode as absolute
-+	    eqep->mode = TIEQEP_MODE_ABSOLUTE;
-+	} else if(tmp_mode == TIEQEP_MODE_RELATIVE)
-+	{
-+	    // In relative mode, we want to latch the value of the eQEP hardware on the 
-+	    // overflow of the unit timer.  So enable the unit timer position reset
-+	    // (Set PCRM[1:0] = 3)
-+	    val = val | PCRM1 | PCRM0;
-+	    
-+	    // Store the mode as relative
-+	    eqep->mode = TIEQEP_MODE_RELATIVE;
-+	}
-+	
-+	// Write the new value back to the control register    
-+	writew(val, eqep->mmio_base + QEPCTL);
-+	
-+	// Return buffer length consumed (all)
-+	return count;
++    if ((rc = kstrtou8(buf, 0, &tmp_mode)))
++        return rc;
++        
++    // Get the existing state of QEPCTL
++    val = readw(eqep->mmio_base + QEPCTL);
++    
++    // Check the mode that was passed
++    if(tmp_mode == TIEQEP_MODE_ABSOLUTE)
++    {
++        // In absolute mode, we don't want to reset the intenal hardware based on time,
++        // so disable the unit timer position reset (Set PCRM[1:0] = 0)
++        val = val & ~PCRM1 & ~PCRM0;
++        
++        // Store the mode as absolute
++        eqep->mode = TIEQEP_MODE_ABSOLUTE;
++    } else if(tmp_mode == TIEQEP_MODE_RELATIVE)
++    {
++        // In relative mode, we want to latch the value of the eQEP hardware on the 
++        // overflow of the unit timer.  So enable the unit timer position reset
++        // (Set PCRM[1:0] = 3)
++        val = val | PCRM1 | PCRM0;
++        
++        // Store the mode as relative
++        eqep->mode = TIEQEP_MODE_RELATIVE;
++    }
++    
++    // Write the new value back to the control register    
++    writew(val, eqep->mmio_base + QEPCTL);
++    
++    // Return buffer length consumed (all)
++    return count;
 +}
 +
 +// Bind read/write functions to sysfs entries
 +static DEVICE_ATTR(enabled,  0644, eqep_get_enabled,      eqep_set_enabled);
-+static DEVICE_ATTR(position, 0644, eqep_get_position,     NULL);
++static DEVICE_ATTR(position, 0644, eqep_get_position,     eqep_set_position);
 +static DEVICE_ATTR(period,   0644, eqep_get_timer_period, eqep_set_timer_period);
 +static DEVICE_ATTR(mode,     0644, eqep_get_mode,         eqep_set_mode);
 +
 +// Array holding all of the sysfs entries
 +static const struct attribute *eqep_attrs[] = {
-+	&dev_attr_enabled.attr,
-+	&dev_attr_position.attr,
-+	&dev_attr_period.attr,
-+	&dev_attr_mode.attr,
-+	NULL,
++    &dev_attr_enabled.attr,
++    &dev_attr_position.attr,
++    &dev_attr_period.attr,
++    &dev_attr_mode.attr,
++    NULL,
 +};
 +
 +// Driver function group
 +static const struct attribute_group eqep_device_attr_group = {
-+	.attrs = (struct attribute **) eqep_attrs,
++    .attrs = (struct attribute **) eqep_attrs,
 +};
 +
 +// Driver compatibility list
 +static struct of_device_id eqep_of_match[] = 
 +{
-+	{ .compatible = "ti,am33xx-eqep" },
-+	{ }
++    { .compatible = "ti,am33xx-eqep" },
++    { }
 +};
 +
 +// Register our compatibilities for device trees
@@ -534,70 +553,70 @@ index 0000000..835ddef
 +// Create an instance of the eQEP driver
 +static int eqep_probe(struct platform_device *pdev)
 +{
-+	struct resource  *r;
-+	struct clk       *clk;
-+	struct eqep_chip *eqep;
-+	struct pinctrl   *pinctrl;
-+	int               ret;
-+	u64               period;
-+	u16               status;
-+	u8                value;
++    struct resource  *r;
++    struct clk       *clk;
++    struct eqep_chip *eqep;
++    struct pinctrl   *pinctrl;
++    int               ret;
++    u64               period;
++    u16               status;
++    u8                value;
 +
 +    // Select any default pins possible provided through the device tree
-+	pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
-+	if (IS_ERR(pinctrl))
-+	{
-+		dev_warn(&pdev->dev, "unable to select pin group\n");
++    pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
++    if (IS_ERR(pinctrl))
++    {
++        dev_warn(&pdev->dev, "unable to select pin group\n");
 +    }
 +    
 +    // Allocate a eqep_driver object
-+	eqep = devm_kzalloc(&pdev->dev, sizeof(struct eqep_chip), GFP_KERNEL);
-+	if (!eqep) {
-+		dev_err(&pdev->dev, "failed to allocate memory\n");
-+		return -ENOMEM;
-+	}
++    eqep = devm_kzalloc(&pdev->dev, sizeof(struct eqep_chip), GFP_KERNEL);
++    if (!eqep) {
++        dev_err(&pdev->dev, "failed to allocate memory\n");
++        return -ENOMEM;
++    }
 +
 +    // Get a handle to the system clock object
-+	clk = devm_clk_get(&pdev->dev, "fck");
-+	if (IS_ERR(clk)) {
-+		dev_err(&pdev->dev, "failed to get clock\n");
-+		return PTR_ERR(clk);
-+	}
++    clk = devm_clk_get(&pdev->dev, "fck");
++    if (IS_ERR(clk)) {
++        dev_err(&pdev->dev, "failed to get clock\n");
++        return PTR_ERR(clk);
++    }
 +
 +    // Get the frequency of the system clock
-+	eqep->clk_rate = clk_get_rate(clk);
-+	if (!eqep->clk_rate) {
-+		dev_err(&pdev->dev, "failed to get clock rate\n");
-+		return -EINVAL;
-+	}
-+	
-+	// Get a resource containing the IRQ for this eQEP controller
-+	r = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-+	if (unlikely(!r)) {
-+		dev_err(&pdev->dev, "Invalid IRQ resource\n");
-+		return -ENODEV;
-+	}
-+	
++    eqep->clk_rate = clk_get_rate(clk);
++    if (!eqep->clk_rate) {
++        dev_err(&pdev->dev, "failed to get clock rate\n");
++        return -EINVAL;
++    }
++    
++    // Get a resource containing the IRQ for this eQEP controller
++    r = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
++    if (unlikely(!r)) {
++        dev_err(&pdev->dev, "Invalid IRQ resource\n");
++        return -ENODEV;
++    }
++    
 +    // Store the irq
-+	eqep->irq = r->start;
++    eqep->irq = r->start;
 +
 +    // Get a resource containing the requested (from DT) memory address and range of eQEP controller
-+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	if (!r) {
-+		dev_err(&pdev->dev, "no memory resource defined\n");
-+		return -ENODEV;
-+	}
++    r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++    if (!r) {
++        dev_err(&pdev->dev, "no memory resource defined\n");
++        return -ENODEV;
++    }
 +
 +    // Remap the eQEP controller memory into our own memory space
-+	eqep->mmio_base = devm_request_and_ioremap(&pdev->dev, r);
-+	if (!eqep->mmio_base)
-+		return  -EADDRNOTAVAIL;
-+	
-+	// Store the platform device in our eQEP data structure for later usage
-+	eqep->pdev = pdev;
-+	
-+	// Subscribe to the eQEP interrupt
-+	if (request_irq(eqep->irq, eqep_irq_handler, IRQF_IRQPOLL, "eqep_interrupt", pdev))
++    eqep->mmio_base = devm_request_and_ioremap(&pdev->dev, r);
++    if (!eqep->mmio_base)
++        return  -EADDRNOTAVAIL;
++    
++    // Store the platform device in our eQEP data structure for later usage
++    eqep->pdev = pdev;
++    
++    // Subscribe to the eQEP interrupt
++    if (request_irq(eqep->irq, eqep_irq_handler, IRQF_IRQPOLL, "eqep_interrupt", pdev))
 +    {
 +        dev_err(&pdev->dev, "unable to request irq for eQEP\n");
 +        return -ENODEV;
@@ -690,117 +709,117 @@ index 0000000..835ddef
 +    eqep->mode = TIEQEP_MODE_ABSOLUTE;
 +
 +    // Enable the power management runtime
-+	pm_runtime_enable(&pdev->dev);
-+	
-+	// Increment the device usage count and run pm_runtime_resume()
-+	pm_runtime_get_sync(&pdev->dev);
++    pm_runtime_enable(&pdev->dev);
++    
++    // Increment the device usage count and run pm_runtime_resume()
++    pm_runtime_get_sync(&pdev->dev);
 +
 +    // Enable the clock to the eQEP unit
-+	status = pwmss_submodule_state_change(pdev->dev.parent, PWMSS_EQEPCLK_EN);
-+	
-+	// If we failed to enable the clocks, fail out
-+	if (!(status & PWMSS_EQEPCLK_EN_ACK)) 
-+	{
-+		dev_err(&pdev->dev, "PWMSS config space clock enable failed\n");
-+		ret = -EINVAL;
-+		goto pwmss_clk_failure;
-+	}
-+	
-+	// Initialize the notify work struture
++    status = pwmss_submodule_state_change(pdev->dev.parent, PWMSS_EQEPCLK_EN);
++    
++    // If we failed to enable the clocks, fail out
++    if (!(status & PWMSS_EQEPCLK_EN_ACK)) 
++    {
++        dev_err(&pdev->dev, "PWMSS config space clock enable failed\n");
++        ret = -EINVAL;
++        goto pwmss_clk_failure;
++    }
++    
++    // Initialize the notify work struture
 +    INIT_WORK(&eqep->notify_work, notify_handler);
 +
 +    // Decrement the device usage count (twice) and run pm_runtime_idle() if zero
-+	pm_runtime_put_sync(&pdev->dev);
++    pm_runtime_put_sync(&pdev->dev);
 +
 +    // Set the platform driver data to the data object we've been creating for the eQEP unit
-+	platform_set_drvdata(pdev, eqep);
-+	
-+	// Success!
++    platform_set_drvdata(pdev, eqep);
++    
++    // Success!
 +    //printk(KERN_INFO "EQEP irq = %d, system clock = %u\n", eqep->irq, eqep->clk_rate);
-+	return 0;
++    return 0;
 +
 +    // If a failure occurred, stop the runtime power management
 +pwmss_clk_failure:
-+	pm_runtime_put_sync(&pdev->dev);
-+	pm_runtime_disable(&pdev->dev);
-+	return ret;
++    pm_runtime_put_sync(&pdev->dev);
++    pm_runtime_disable(&pdev->dev);
++    return ret;
 +}
 +
 +// Remove an instance of the eQEP driver
 +static int eqep_remove(struct platform_device *pdev)
 +{
 +    // Get the eQEP driver data from the platform device structure
-+	struct eqep_chip *eqep = platform_get_drvdata(pdev);
++    struct eqep_chip *eqep = platform_get_drvdata(pdev);
 +    
 +    // Cancel work
 +    cancel_work_sync(&eqep->notify_work);
-+	
-+	// Unmap from sysfs
-+	sysfs_remove_group(&pdev->dev.kobj, &eqep_device_attr_group);
-+	
-+	// Release important assets
-+	free_irq(eqep->irq, pdev);
++    
++    // Unmap from sysfs
++    sysfs_remove_group(&pdev->dev.kobj, &eqep_device_attr_group);
++    
++    // Release important assets
++    free_irq(eqep->irq, pdev);
 +
 +    // Increment the device usage count and run pm_runtime_resume()
-+	pm_runtime_get_sync(&pdev->dev);
-+	
-+	// Disable the eQEP clock
-+	pwmss_submodule_state_change(pdev->dev.parent, PWMSS_EQEPCLK_STOP_REQ);
-+	
-+	// Decrement the device usage count (twice) and run pm_runtime_idle() if zero
-+	pm_runtime_put_sync(&pdev->dev);
-+	pm_runtime_put_sync(&pdev->dev);
-+	
-+	// Disable the runtime power management of this device 
-+	pm_runtime_disable(&pdev->dev);
-+	
-+	// Return success
-+	return 0;
++    pm_runtime_get_sync(&pdev->dev);
++    
++    // Disable the eQEP clock
++    pwmss_submodule_state_change(pdev->dev.parent, PWMSS_EQEPCLK_STOP_REQ);
++    
++    // Decrement the device usage count (twice) and run pm_runtime_idle() if zero
++    pm_runtime_put_sync(&pdev->dev);
++    pm_runtime_put_sync(&pdev->dev);
++    
++    // Disable the runtime power management of this device 
++    pm_runtime_disable(&pdev->dev);
++    
++    // Return success
++    return 0;
 +}
 +
 +// Power management suspend device
 +static int eqep_suspend(struct device *dev)
 +{
 +    // Get the eqep driver information
-+	struct eqep_chip   *eqep = dev_get_drvdata(dev);
-+	u16                 tmp;
-+	
-+	// Shut down interrupts
++    struct eqep_chip   *eqep = dev_get_drvdata(dev);
++    u16                 tmp;
++    
++    // Shut down interrupts
 +    eqep->prior_qeint = readw(eqep->mmio_base + QEINT);
 +    tmp = eqep->prior_qeint & ~UTOF;
 +            // UTOF - Unit Time Period interrupt. 
 +    writew(tmp, eqep->mmio_base + QEINT);
-+		
-+	// Get the existing state of QEPCTL
-+	eqep->prior_qepctl = readw(eqep->mmio_base + QEPCTL);
-+	
-+	// Disable eQEP controller
-+	writew(eqep->prior_qepctl & ~PHEN, eqep->mmio_base + QEPCTL);
-+	
-+	// Decrement the device usage count and run pm_runtime_idle() if zero
-+	pm_runtime_put_sync(dev);
-+	
-+	// Return success
-+	return 0;
++        
++    // Get the existing state of QEPCTL
++    eqep->prior_qepctl = readw(eqep->mmio_base + QEPCTL);
++    
++    // Disable eQEP controller
++    writew(eqep->prior_qepctl & ~PHEN, eqep->mmio_base + QEPCTL);
++    
++    // Decrement the device usage count and run pm_runtime_idle() if zero
++    pm_runtime_put_sync(dev);
++    
++    // Return success
++    return 0;
 +}
 +
 +// Power management wake device back up
 +static int eqep_resume(struct device *dev)
 +{
 +    // Get the eqep driver information
-+	struct eqep_chip *eqep = dev_get_drvdata(dev);
-+	
-+	// Restore interrupt enabled register
++    struct eqep_chip *eqep = dev_get_drvdata(dev);
++    
++    // Restore interrupt enabled register
 +    writew(eqep->prior_qeint, eqep->mmio_base + QEINT);
-+	
-+	// Restore prior qep control register
-+	writew(eqep->prior_qepctl, eqep->mmio_base + QEPCTL);
++    
++    // Restore prior qep control register
++    writew(eqep->prior_qepctl, eqep->mmio_base + QEPCTL);
 +
 +    // Increment the device usage count and run pm_runtime_resume()
-+	pm_runtime_get_sync(dev);
-+	
-+	// Success
-+	return 0;
++    pm_runtime_get_sync(dev);
++    
++    // Success
++    return 0;
 +}
 +
 +// create pm functions object
@@ -808,14 +827,14 @@ index 0000000..835ddef
 +
 +// Platform driver information
 +static struct platform_driver eqep_driver = {
-+	.driver = {
-+		.name	        = "eqep",
-+		.owner	        = THIS_MODULE,
-+		.pm	            = &eqep_pm_ops,
-+		.of_match_table = eqep_of_match,
-+	},
-+	.probe = eqep_probe,
-+	.remove = eqep_remove,
++    .driver = {
++        .name           = "eqep",
++        .owner          = THIS_MODULE,
++        .pm             = &eqep_pm_ops,
++        .of_match_table = eqep_of_match,
++    },
++    .probe = eqep_probe,
++    .remove = eqep_remove,
 +};
 +
 +// Register this platform driver
@@ -826,5 +845,5 @@ index 0000000..835ddef
 +MODULE_AUTHOR("Nathaniel R. Lewis");
 +MODULE_LICENSE("GPL");
 -- 
-1.7.10.4
+1.8.1.4
 
