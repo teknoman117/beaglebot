@@ -12,21 +12,21 @@ int main (int argc, char** argv)
         return 1;
     }
     
-    // Query some attributes of the setup
-    eQEP *eqep1 = new eQEP(argv[1], eQEP::eQEP_Mode_Absolute);
+    // Allocate an instane of 
+    eQEP eqep1(argv[1], eQEP::eQEP_Mode_Absolute);
     
-    eqep1->set_period(500000000L);
+    // Set the unit time period to 500,000,000 ns, or 0.5 seconds
+    eqep1.set_period(500000000L);
     
-    // Print out period
-    //std::cout << "[eQEP " << argv[1] << "] Period = " << eqep1->get_period() << std::endl;
+    // Query back the period
+    std::cout << "[eQEP " << argv[1] << "] Period = " << eqep1.get_period() << " ns" << std::endl;
     
     // Read position indefintely
     while(1)
     {
-        std::cout << "[eQEP " << argv[1] << "] Position = " << eqep1->get_position() << std::endl;
+        std::cout << "[eQEP " << argv[1] << "] Position = " << eqep1.get_position() << std::endl;
     }
     
-    // Derp
-    delete eqep1;
+    // Return success
     return 0;
 }

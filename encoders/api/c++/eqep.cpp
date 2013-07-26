@@ -189,6 +189,9 @@ uint64_t eQEP::get_period()
     
     // Commit changes
     fclose(fp);
+    
+    // Return the period
+    return period;
 }
 
 // Get the mode of the eQEP hardware
@@ -211,4 +214,7 @@ eQEP::eQEP_Mode eQEP::get_mode()
     
     // Commit changes
     fclose(fp);
+    
+    // Return the mode
+    return mode;
 }
