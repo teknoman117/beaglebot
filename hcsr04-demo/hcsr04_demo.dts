@@ -1,0 +1,41 @@
+/*
+ * Copyright (C) 2013 Nathaniel R. Lewis - http://teknoman117.wordpress.com/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ * 
+ * Setup pinmux for the 
+ */
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "ti,beaglebone", "ti,beaglebone-black";
+
+    /* identification */
+    part-number = "hcsr04_demo";
+    version     = "00A0";
+
+    fragment@0 {
+        target = <&am33xx_pinmux>;
+        __overlay__ {
+        	pinctrl_hcsr04_demo: pinctrl_hcsr04_demo_pins {
+        		pinctrl-single,pins = <
+                        0x018 0x0F  /* GPIO1_6, MODE7 */
+                        0x01C 0x37  /* GPIO1_7, MODE7 */ 
+        		>;
+        	};
+        };
+    };
+    
+    fragment@1 {
+        target = <&pruss>;
+        __overlay__ {
+            status = "okay";
+            
+            pinctrl-names = "default"
+            pinctrl-0 = <&pinctrl_hcsr04_demo>
+        };
+    };
+};
