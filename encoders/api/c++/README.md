@@ -8,13 +8,13 @@ A test application is provided as test.cpp.  It sets the polling period of the p
 Using the C++ API
 --------------------
 
-To create an instance of the eQEP object, you must know the root path of the eQEP sysfs entry.  A guide is provided in encoders/README.md.  The following code create an object representing the eQEP1 interface.  The number on ocp.* may change based on hardware and/or software revision, but the numbers on *.epwmss and *.eqep will never change, as they represent the addresses of where the hardware is physically located.  The second parameter of the constructor is the operating mode of the eQEP hardware.  Options are eQEP::Mode_Absolute and eQEP::Mode_Relative and are described in encoders/README.md.
+To create an instance of the eQEP object, you must know the root path of the eQEP sysfs entry.  A guide is provided in encoders/README.md.  The following code create an object representing the eQEP1 interface.  The number on ocp.* may change based on hardware and/or software revision, but the numbers on *.epwmss and *.eqep will never change, as they represent the addresses of where the hardware is physically located.  The second parameter of the constructor is the operating mode of the eQEP hardware.  Options are eQEP::eQEP_Mode_Absolute and eQEP::eQEP_Mode_Relative and are described in encoders/README.md.
 
 It is important when building to use the --std=c++0x or --std=c++11 flag, because for some reason cstdint was not provided in earlier releases of C++.
 
 ```cpp
 // Create an encoder instance for eQEP1 in Absolute mode
-eQEP *encoder = new eQEP("/sys/devices/ocp.2/48302000.epwmss/48302180.eqep", eQEP.Mode_Absolute);
+eQEP *encoder = new eQEP("/sys/devices/ocp.2/48302000.epwmss/48302180.eqep", eQEP::eQEP_Mode_Absolute);
 ```
 
 The eQEP driver provides the ability to poll the position attribute.  We need to set how often that poll will return.  The default when the driver loads is 1 second.  To set, call eQEP::set_period(uint64_t nanoseconds).
@@ -45,7 +45,7 @@ It is possible to change the mode of the eQEP hardware after the object has been
 
 ```cpp
 // Set the mode of encoder to relative mode
-encoder->set_mode(eQEP::Mode_Relative);
+encoder->set_mode(eQEP::eQEP_Mode_Relative);
 ```
 
 It is possible to also get the current period and mode values as well
