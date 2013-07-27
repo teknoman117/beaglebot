@@ -1,7 +1,7 @@
 encoders
 ========
 
-Driver and API for the Enhanced Quadrature Encoder Pulse (eQEP) decoder found on the AM33xx series TI SoCs.  Designed with mainly the Beaglebone and Beaglebone Black in mind.  The driver registers a sysfs entry with four main attributes
+Driver and API for the Enhanced Quadrature Encoder Pulse (eQEP) decoder found on the AM33xx series TI SoCs.  Designed with mainly the Beaglebone and Beaglebone Black in mind.  The driver registers a sysfs entry with four main attributes.
 
 __enabled__ - turns the eQEP hardware on or off. 0 - off, 1 - on
 
@@ -12,6 +12,20 @@ __period__ - the time in nanoseconds for the unit timer to overflow.  The intern
 __position__ - the position of the encoder.  In absolute mode, this attribute represents the current position of the encoder.  In relative mode, this attribute represents the position of the encoder at the last unit timer overflow.  This attribute is pollable. In either operating mode, the unit timer overflow event wakes up any process polling on this attribute.  This feature is most useful in relative mode.  It allows the process or thread to awake when there is measurement available in the last time period.
 
 Information on configuring the driver in the device tree is presented in the dts directory
+
+The paths for the sysfs entries on the beaglebones are
+
+/sys/devices/ocp.*/{epwmss_addr}.epwmss/{eqep_addr}.eqep/
+
+For eQEP0, the epwmss address is 48300000 and the eqep address is 48300180
+
+For eQEP1, the epwmss address is 48302000 and the eqep address is 48302180
+
+For eQEP2, the epwmss address is 48304000 and the eqep address is 48304180
+
+It is important to note that only eQEP1 and eQEP2 are available on the Beaglebone, and that all three are available on the Beaglebone Black.  This is because one of the encoder clock input pins is not broken out for eQEP0 on the original Beaglebone.
+
+If using eQEP 1 and/or 2, video must be disabled on the Beaglebone and Beaglebone Black, as they share pins with the lcd_data lines.  eQEP 0 on the Beaglebone black can be used with video enabled.
 
 api 
 ---
