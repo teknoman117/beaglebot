@@ -13,7 +13,7 @@ cd linux-dev
 git checkout origin/am33x-v3.8 -b am33x-v3.8
 ```
 
-Setup your system.sh file as directed in the video.  At this point you will want to patch and build the kernel using 
+Setup your system.sh file as directed in the video.  At this point you will want to build the kernel using 
 
 ```bash
 ./build_kernel.sh
@@ -25,7 +25,7 @@ Let the kernel complete its building process.  At this point you will want to ap
 git apply /path/to/beaglebot/encoders/patches/0001-tieqep-driver.patch
 ```
 
-This will apply the patch to the kernel source.  It performs three changes.  First, it adds the eQEP driver as KERNEL/driver/misc/tieqep.c.  Second, it adds entries to the Makefile and Kconfig to add a menuconfig option to enable the driver.  Lastly, it patches the am33xx.dtsi device tree source file to add entries under the epwmss definitions for the eQEP hardware.  I chose this because in the chip, the eQEP is part of the "Enhanced PWM Sub System," which provides the clock source.  
+This will apply the patch to the kernel source.  It performs three changes.  First, it adds the eQEP driver as KERNEL/drivers/misc/tieqep.c.  Second, it adds entries to the Makefile and Kconfig to add a menuconfig option to enable the driver.  Lastly, it patches the am33xx.dtsi device tree source file to add entries under the epwmss definitions for the eQEP hardware.  I chose this because in the chip, the eQEP is part of the "Enhanced PWM Sub System," which provides the clock source.  
 
 After patching the kernel, go back to the linux-dev directory and rebuild the kernel.  Don't use the build_kernel.sh script, it will nuke the patch.  Use the rebuild script in the tools directory
 
