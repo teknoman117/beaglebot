@@ -33,7 +33,7 @@ After patching the kernel, go back to the linux-dev directory and rebuild the ke
 ./tools/rebuild.sh
 ```
 
-When you get the menuconfig screen for the kernel, you now need to enable the driver.  Go to Device Drivers/Misc Devices and build "EQEP Hardware quadrature encoder controller" into the kernel.  Exit and save the configuration and let the kernel rebuild, it shouldn't take very long, as its only building are driver and rebuilding the device tree blobs.
+When you get the menuconfig screen for the kernel, you now need to enable the driver.  Go to Device Drivers/Misc Devices and build "EQEP Hardware quadrature encoder controller" into the kernel.  Exit and save the configuration and let the kernel rebuild, it shouldn't take very long, as its only building the driver and rebuilding the device tree blobs.
 
 At this point you have a kernel with the eQEP driver.  Install the kernel onto your beaglebone and boot it up.
 
