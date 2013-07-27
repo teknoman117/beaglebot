@@ -24,7 +24,7 @@ The eQEP driver provides the ability to poll the position attribute.  We need to
 encoder.set_period(100000000)
 ```
 
-To read the immediate position of the encoder in absolute mode, or the last recorded position in relative mode, you call call eQEP.get_position()
+To read the immediate position of the encoder in absolute mode, or the last recorded position in relative mode, you call eQEP.get_position()
 
 ```python
 # Get the immediate position

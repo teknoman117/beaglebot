@@ -1,4 +1,4 @@
-Patching the Kernel with eQEP driver
+Patching the Kernel with the eQEP driver
 ====================================
 
 The eQEP driver is distributed as a kernel source patch.  Setting this up is not really that hard.  This guide assumes you are on a Linux system and have a Beaglebone or Black.  If you have never done this before, I'd recommend watching the first 20 minutes or so of this video on YouTube (http://www.youtube.com/watch?v=HJ9nUqYMjqs).  It provides a great explaination of compiling the kernel for the Beaglebone.  That video is a little dated at this point, as this video was for kernel 3.2.  The general process is the same, but we need a different kernel.
@@ -33,7 +33,7 @@ After patching the kernel, go back to the linux-dev directory and rebuild the ke
 ./tools/rebuild.sh
 ```
 
-When you get the menuconfig screen for the kernel, you now need to enable the driver.  Go to Drivers/Miscellaneous and build "EQEP Hardware quadrature encoder controller" into the kernel.  Exit and save the configuration and let the kernel rebuild, it shouldn't take very long, as its only building are driver and rebuilding the device tree blobs.
+When you get the menuconfig screen for the kernel, you now need to enable the driver.  Go to Device Drivers/Misc Devices and build "EQEP Hardware quadrature encoder controller" into the kernel.  Exit and save the configuration and let the kernel rebuild, it shouldn't take very long, as its only building are driver and rebuilding the device tree blobs.
 
 At this point you have a kernel with the eQEP driver.  Install the kernel onto your beaglebone and boot it up.
 
