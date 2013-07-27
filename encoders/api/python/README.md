@@ -3,7 +3,7 @@ Python eQEP API
 
 This is the documentation on the Python bindings for the eQEP driver.  These bindings provide a very simplistic, but complete interface to the driver.  A python source file is provided - eqep.py, which contains the eQEP class that provides the binding.
 
-A test application is provided as test.py.  It set the polling period of eQEP1 to 10 Hz and indefinitely 
+A test application is provided as test.py.  It sets the polling period of eQEP1 to 10 Hz and indefinitely polls the position
 
 Using the Python API
 --------------------
