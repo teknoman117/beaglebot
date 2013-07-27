@@ -10,7 +10,7 @@ Using the C++ API
 
 To create an instance of the eQEP object, you must know the root path of the eQEP sysfs entry.  A guide is provided in encoders/README.md.  The following code create an object representing the eQEP1 interface.  The number on ocp.* may change based on hardware and/or software revision, but the numbers on *.epwmss and *.eqep will never change, as they represent the addresses of where the hardware is physically located.  The second parameter of the constructor is the operating mode of the eQEP hardware.  Options are eQEP::Mode_Absolute and eQEP::Mode_Relative and are described in encoders/README.md.
 
-It is important when building to use the -std=c++0x or -std=c++11 flag, because for some reason cstdint was not provided in earlier releases of C++.
+It is important when building to use the --std=c++0x or --std=c++11 flag, because for some reason cstdint was not provided in earlier releases of C++.
 
 ```cpp
 // Create an encoder instance for eQEP1 in Absolute mode
