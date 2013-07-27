@@ -15,8 +15,8 @@ int main (int argc, char** argv)
     // Allocate an instane of 
     eQEP eqep1(argv[1], eQEP::eQEP_Mode_Absolute);
     
-    // Set the unit time period to 500,000,000 ns, or 0.5 seconds
-    eqep1.set_period(500000000L);
+    // Set the unit time period to 100,000,000 ns, or 0.1 seconds
+    eqep1.set_period(100000000L);
     
     // Query back the period
     std::cout << "[eQEP " << argv[1] << "] Period = " << eqep1.get_period() << " ns" << std::endl;
