@@ -25,6 +25,10 @@
 #include <cstdint>
 #include <string>
 
+#define eQEP0 "/sys/devices/ocp.2/48300000.epwmss/48300180.eqep"
+#define eQEP1 "/sys/devices/ocp.2/48302000.epwmss/48302180.eqep"
+#define eQEP2 "/sys/devices/ocp.2/48304000.epwmss/48304180.eqep"
+
 // Class which defines an interface to my eQEP driver
 class eQEP
 {

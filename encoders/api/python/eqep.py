@@ -7,6 +7,11 @@ class eQEP(object):
     # Modes
     MODE_ABSOLUTE = 0
     MODE_RELATIVE = 1
+    
+    # eQEP Controller Locations
+    eQEP0 = "/sys/devices/ocp.2/48300000.epwmss/48300180.eqep"
+    eQEP1 = "/sys/devices/ocp.2/48302000.epwmss/48302180.eqep"
+    eQEP2 = "/sys/devices/ocp.2/48304000.epwmss/48304180.eqep"
 
     # Set the mode of the eQEP hardware
     def set_mode(self, mode):
