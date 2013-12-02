@@ -1,22 +1,23 @@
-From dedc9774d50775a07de54d5693a0def64a72792e Mon Sep 17 00:00:00 2001
+From 3877700b5306923a693c31a6f011ca25819ad90e Mon Sep 17 00:00:00 2001
 From: Nathaniel Lewis <linux.robotdude@gmail.com>
-Date: Thu, 25 Jul 2013 22:20:36 -0700
-Subject: [PATCH] Driver: Provides a sysfs interface to the eQEP hardware on
- the AM33XX series SoCs
+Date: Mon, 2 Dec 2013 07:45:03 -0800
+Subject: [PATCH] Provides a sysfs interface to the eQEP hardware on the AM33XX
+ series SoCs
 
+Signed-off-by: Nathaniel Lewis <linux.robotdude@gmail.com>
 ---
  arch/arm/boot/dts/am33xx.dtsi |  27 ++
  drivers/misc/Kconfig          |  11 +
  drivers/misc/Makefile         |   1 +
- drivers/misc/tieqep.c         | 742 ++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 781 insertions(+)
+ drivers/misc/tieqep.c         | 744 ++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 783 insertions(+)
  create mode 100644 drivers/misc/tieqep.c
 
 diff --git a/arch/arm/boot/dts/am33xx.dtsi b/arch/arm/boot/dts/am33xx.dtsi
-index aedffdb..ad78525 100644
+index 5791c69..002dd2d 100644
 --- a/arch/arm/boot/dts/am33xx.dtsi
 +++ b/arch/arm/boot/dts/am33xx.dtsi
-@@ -534,6 +534,15 @@
+@@ -539,6 +539,15 @@
  				ti,hwmods = "ehrpwm0";
  				status = "disabled";
  			};
@@ -32,7 +33,7 @@ index aedffdb..ad78525 100644
  		};
  
  		epwmss1: epwmss@48302000 {
-@@ -562,6 +571,15 @@
+@@ -567,6 +576,15 @@
  				ti,hwmods = "ehrpwm1";
  				status = "disabled";
  			};
@@ -48,7 +49,7 @@ index aedffdb..ad78525 100644
  		};
  
  		epwmss2: epwmss@48304000 {
-@@ -590,6 +608,15 @@
+@@ -595,6 +613,15 @@
  				ti,hwmods = "ehrpwm2";
  				status = "disabled";
  			};
@@ -98,10 +99,10 @@ index 72aef82..b10c476 100644
  obj-y				+= cape/
 diff --git a/drivers/misc/tieqep.c b/drivers/misc/tieqep.c
 new file mode 100644
-index 0000000..0429383
+index 0000000..7eb308a
 --- /dev/null
 +++ b/drivers/misc/tieqep.c
-@@ -0,0 +1,742 @@
+@@ -0,0 +1,744 @@
 +/*
 + * TI eQEP driver for AM33xx devices
 + *
@@ -668,6 +669,8 @@ index 0000000..0429383
 +    else
 +        status = (value) ? status | SWAP : status & ~SWAP;
 +        
++    // Write the decoder control settings back to the control register
++    writew(status, eqep->mmio_base + QDECCTL);
 +    
 +    // Initialize the position counter to zero
 +    writel(0, eqep->mmio_base + QPOSINIT);
@@ -845,5 +848,5 @@ index 0000000..0429383
 +MODULE_AUTHOR("Nathaniel R. Lewis");
 +MODULE_LICENSE("GPL");
 -- 
-1.8.1.4
+1.8.4
 
