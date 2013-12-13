@@ -561,7 +561,7 @@ index 0000000..7eb308a
 +    int               ret;
 +    u64               period;
 +    u16               status;
-+    u8                value;
++    u32               value;
 +
 +    // Select any default pins possible provided through the device tree
 +    pinctrl = devm_pinctrl_get_select_default(&pdev->dev);
@@ -634,37 +634,37 @@ index 0000000..7eb308a
 +    status = readw(eqep->mmio_base + QDECCTL);
 +    
 +    // Quadrature mode or direction mode
-+    if(of_property_read_u8(pdev->dev.of_node, "count_mode", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "count_mode", &value))
 +        status = status & ~QSRC1 & ~QSRC0;
 +    else
 +        status = ((value) ? status | QSRC0 : status & ~QSRC0) & ~QSRC1;
 +    
 +    // Should we invert the qa input
-+    if(of_property_read_u8(pdev->dev.of_node, "invert_qa", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "invert_qa", &value))
 +        status = status & ~QAP;
 +    else
 +        status = (value) ? status | QAP : status & ~QAP;
 +    
 +    // Should we invert the qb input
-+    if(of_property_read_u8(pdev->dev.of_node, "invert_qb", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "invert_qb", &value))
 +        status = status & ~QBP;
 +    else
 +        status = (value) ? status | QBP : status & ~QBP;
 +    
 +    // Should we invert the index input
-+    if(of_property_read_u8(pdev->dev.of_node, "invert_qi", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "invert_qi", &value))
 +        status = status & ~QIP;
 +    else
 +        status = (value) ? status | QIP : status & ~QIP;
 +    
 +    // Should we invert the strobe input
-+    if(of_property_read_u8(pdev->dev.of_node, "invert_qs", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "invert_qs", &value))
 +        status = status & ~QSP;
 +    else
 +        status = (value) ? status | QSP : status & ~QSP;
 +    
 +    // Should we swap the cha and chb inputs
-+    if(of_property_read_u8(pdev->dev.of_node, "swap_inputs", &value))
++    if(of_property_read_u32(pdev->dev.of_node, "swap_inputs", &value))
 +        status = status & ~SWAP;
 +    else
 +        status = (value) ? status | SWAP : status & ~SWAP;
