@@ -1,9 +1,9 @@
 Patching the Kernel with the eQEP driver
 ====================================
 
-The eQEP driver is distributed as a kernel source patch.  Setting this up is not really that hard.  This guide assumes you are on a Linux system and have a Beaglebone or Black.  If you have never done this before, I'd recommend watching the first 20 minutes or so of this video on YouTube (http://www.youtube.com/watch?v=HJ9nUqYMjqs).  It provides a great explaination of compiling the kernel for the Beaglebone.  That video is a little dated at this point, as this video was for kernel 3.2.  The general process is the same, but we need a different kernel.
+The eQEP driver is distributed as a kernel source patch, and setting it up is not really that hard.  This guide assumes you are on a Linux system and have a Beaglebone or Beaglebone Black.  If you have never built a Linux kernel for the Beaglebone SBCs before, I'd recommend watching the first 20 minutes or so of Derek Molloy's video on YouTube (http://www.youtube.com/watch?v=HJ9nUqYMjqs).  It provides a great explaination of compiling the kernel for the Beaglebone.  The video is a little dated at this point, as this video was for kernel 3.2.  The general process is the same, but we need a different kernel.
 
-I recommend using the hard float variant of the arm compiler, arm-linux-gnueabihf-gcc, along with a hard float image of Debian or Ubuntu.  This will give you the best performance.  I developed this driver using the am33x-v3.8 branch of Robert C Nelson's linux-dev repository
+I recommend using the hard float variant of the arm compiler, arm-linux-gnueabihf-gcc, which requires you to use a hard float image of Debian or Ubuntu.  Hard float will give you the best performance because floating point operations are performed on the ARM cpu's FPU instead of being emulated in software.  I developed this driver using the am33x-v3.8 branch of Robert C Nelson's linux-dev repository.
 
 Open a terminal and go to the directory you want to build your kernel in
 
