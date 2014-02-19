@@ -27,17 +27,17 @@ It is important to note that only eQEP1 and eQEP2 are available on the Beaglebon
 
 If using eQEP 1 and/or 2, video must be disabled on the Beaglebone and Beaglebone Black, as they share pins with the lcd_data lines.  eQEP 0 on the Beaglebone black can be used with video enabled.
 
-api 
----
+patches
+-------
 
-C++ and Python API for the eQEP driver
+Patches to the kernel source to add the eQEP driver.  README.md contains instructions for building the kernel with the eQEP driver
 
 dts
 ---
 
 Device Tree Overlays for configuring the eQEP driver and allocating the pins for the eQEP hardware
 
-patches
--------
+api 
+---
 
-Patches to the kernel source to add the eQEP driver.  README.md contains instructions for building the kernel with the eQEP driver
+C++ and Python API for the eQEP driver
