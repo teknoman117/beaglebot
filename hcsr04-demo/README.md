@@ -13,7 +13,7 @@ Since kernel 3.6, the omap_mux kernel driver was removed in favor of the new dev
 
 Note about kernel 3.8+
 ----
-Since kernel 3.8, we have something called a device tree overlay.  These are loaded in runtime to augment to configuration of a board while the kernel is booted.  This makes using them a lot more friendly because you don't have to recompile your board's base overlay, and since its during runtime, you don't have to reboot either.  A device tree source has been provided (note: untested at the moment) which enabled the pruss subsystem and also sets up the pins for this demo.  To compile it, grab and install a copy of the device tree compiler (script only works on Debian derived systems)
+Since kernel 3.8, we have device tree overlays.  These are loaded in runtime to augment to configuration of a board while the system is booted.  This makes the device tree system a lot more friendly because you don't have to recompile the board's base overlay, and since it's during runtime, you don't have to reboot either.  A device tree overlay has been provided (note: untested at the moment) which enabled the pruss subsystem and also sets up the pins for this demo.  To compile it, grab and install a copy of the device tree compiler (script only works on Debian and Debian derived systems such as Ubuntu)
 
 ```bash
 wget -c https://raw.github.com/RobertCNelson/tools/master/pkgs/dtc.sh
