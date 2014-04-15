@@ -34,8 +34,8 @@
         __overlay__ {
             status = "okay";
             
-            pinctrl-names = "default"
-            pinctrl-0 = <&pinctrl_hcsr04_demo>
+            pinctrl-names = "default";
+            pinctrl-0 = <&pinctrl_hcsr04_demo>;
         };
     };
 };
