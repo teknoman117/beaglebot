@@ -1,0 +1,68 @@
+From 02dadd6f29d364a47e37f0080046e0a671d69c5c Mon Sep 17 00:00:00 2001
+From: Nathaniel Lewis <linux.robotdude@gmail.com>
+Date: Wed, 14 May 2014 22:11:12 -0700
+Subject: [PATCH] Patch am33xx.dtsi to include device tree nodes for the eQEP
+ units in the SoC
+
+---
+ arch/arm/boot/dts/am33xx.dtsi | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
+
+diff --git a/arch/arm/boot/dts/am33xx.dtsi b/arch/arm/boot/dts/am33xx.dtsi
+index c1a13a4..bc8502e 100644
+--- a/arch/arm/boot/dts/am33xx.dtsi
++++ b/arch/arm/boot/dts/am33xx.dtsi
+@@ -547,6 +547,16 @@
+ 				ti,hwmods = "ehrpwm0";
+ 				status = "disabled";
+ 			};
++			
++			eqep0: eqep@0x48300180 {
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48300180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <79>;
++				ti,hwmods = "eqep0";
++				index = <0>;
++				status = "disabled";
++			};
+ 		};
+ 
+ 		epwmss1: epwmss@48302000 {
+@@ -575,6 +585,16 @@
+ 				ti,hwmods = "ehrpwm1";
+ 				status = "disabled";
+ 			};
++			
++			eqep1: eqep@0x48302180 {
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48302180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <88>;
++				ti,hwmods = "eqep1";
++				index = <1>;
++				status = "disabled";
++			};
+ 		};
+ 
+ 		epwmss2: epwmss@48304000 {
+@@ -603,6 +623,16 @@
+ 				ti,hwmods = "ehrpwm2";
+ 				status = "disabled";
+ 			};
++			
++			eqep2: eqep@0x48304180 {
++				compatible = "ti,am33xx-eqep";
++				reg = <0x48304180 0x80>;
++				interrupt-parent = <&intc>;
++				interrupts = <89>;
++				ti,hwmods = "eqep2";
++				index = <2>;
++				status = "disabled";
++			};
+ 		};
+ 
+ 		sham: sham@53100000 {
+-- 
+1.8.4.5
+
